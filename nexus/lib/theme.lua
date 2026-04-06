@@ -263,6 +263,10 @@ function M.setScheme(name)
   if M.schemes[name] then
     M.active = M.schemes[name]
     M.activeName = name
+    -- Nil unused scheme tables to free RAM (only one scheme is active at a time)
+    for k in pairs(M.schemes) do
+      if k ~= name then M.schemes[k] = nil end
+    end
     return true
   end
   return false

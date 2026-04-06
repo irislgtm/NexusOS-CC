@@ -74,6 +74,11 @@ hw.gpu.set(1, 5, "[BOOT] All boot scripts loaded.")
 local animOk, bootAnim = pcall(require, "boot_anim")
 if animOk and bootAnim then
   bootAnim.run(hw.gpu, 1.5)
+  -- Free the animation module immediately — it's never needed again
+  bootAnim = nil
+  package.loaded["boot_anim"] = nil
+  collectgarbage("collect")
+  collectgarbage("collect")
 end
 
 -- Component hotplug support

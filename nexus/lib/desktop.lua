@@ -250,6 +250,10 @@ function M.start()
     if workspace then workspace:requestRedraw() end
   end, math.huge)
 
+  -- Force GC before entering the event loop to maximise available Lua heap
+  collectgarbage("collect")
+  collectgarbage("collect")
+
   -- Start workspace event loop (blocking)
   workspace:start()
 end
