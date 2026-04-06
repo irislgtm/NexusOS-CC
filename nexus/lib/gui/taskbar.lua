@@ -43,7 +43,7 @@ function Taskbar:draw(screen)
   screen.fillRect(ax, ay, w, 1, T.get("taskbar_bg"))
 
   -- Left: NEXUS logo
-  screen.drawText(ax, ay, " ◆ NEXUS ", T.get("accent"), T.get("taskbar_bg"))
+  screen.drawText(ax, ay, " ◆ NEXUS ", T.get("text_bright"), T.get("taskbar_active_bg"))
 
   -- Window buttons
   local x = ax + 10
@@ -90,6 +90,13 @@ function Taskbar:eventHandler(workspace, eventName, ...)
     local ax, ay = self:absolutePosition()
 
     if py == ay then
+      -- NEXUS logo click
+      if px >= ax and px < ax + 10 then
+        if self.onLogoClick then
+          self.onLogoClick()
+          return true
+        end
+      end
       local WM = require("gui.window")
       for _, item in ipairs(self._items) do
         if item._x and px >= item._x and px < item._x + item._w then

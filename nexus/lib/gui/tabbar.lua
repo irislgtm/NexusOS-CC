@@ -17,7 +17,16 @@ TabBar.__index = TabBar
 function TabBar.new(x, y, w, tabs)
   local self = Widget.new(x, y, w, 1)
   setmetatable(self, TabBar)
-  self.tabs       = tabs or {}
+  -- Accept both string arrays and {name=...} tables
+  local normalized = {}
+  for i, t in ipairs(tabs or {}) do
+    if type(t) == "string" then
+      normalized[i] = { name = t }
+    else
+      normalized[i] = t
+    end
+  end
+  self.tabs       = normalized
   self.activeTab  = 1
   self.onTabChanged = nil  -- callback(self, tabIndex, tabData)
   return self

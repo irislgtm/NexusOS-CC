@@ -73,6 +73,7 @@ local FILES = {
   "drivers/draconic.lua",
   "drivers/enderio.lua",
   "drivers/thermal.lua",
+  "drivers/storage.lua",
 
   -- Shell & Utilities
   "bin/sh.lua",
@@ -94,6 +95,7 @@ local FILES = {
   "apps/netmon.app/Main.lua",
   "apps/terminal.app/Main.lua",
   "apps/settings.app/Main.lua",
+  "apps/storage.app/Main.lua",
 
   -- Drone Firmware
   "firmware/drone_boot.lua",
@@ -110,6 +112,7 @@ local DIRS = {
   "apps", "apps/tracker.app", "apps/mapper.app", "apps/sigint.app",
   "apps/drones.app", "apps/ae2mon.app", "apps/reactor.app",
   "apps/netmon.app", "apps/terminal.app", "apps/settings.app",
+  "apps/storage.app",
   "etc", "var", "var/log", "var/maps", "var/drone_telemetry",
   "tmp",
 }
@@ -201,8 +204,8 @@ clearScreen()
 -- Banner
 setColor(0x00FF00, 0x000000)
 centerText(2,  "╔════════════════════════════════════════════╗")
-centerText(3,  "║         N E X U S - O S   v" .. VERSION .. "          ║")
-centerText(4,  "║      Surveillance Operating System        ║")
+centerText(3,  "║          N E X U S - O S   v" .. VERSION .. "          ║")
+centerText(4,  "║        Surveillance Operating System       ║")
 centerText(5,  "╚════════════════════════════════════════════╝")
 centerText(7,  "Autonomous Tracking · Mapping · Drone Control")
 

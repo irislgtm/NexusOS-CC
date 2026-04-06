@@ -29,9 +29,8 @@ function M.matrixRain(gpu, duration)
       if math.random() > 0.4 then
         -- Draw falling char (bright head)
         local y = cols[x]
-        local ch = chars:sub(math.random(1, #chars), math.random(1, #chars))
-        if #ch == 0 then ch = "0" end
-        ch = ch:sub(1, 1)
+        local ci = math.random(1, #chars)
+        local ch = chars:sub(ci, ci)
 
         gpu.setForeground(0x00FF00)
         gpu.set(x, y, ch)
@@ -40,9 +39,8 @@ function M.matrixRain(gpu, duration)
         local trailY = y - 1
         if trailY >= 1 then
           gpu.setForeground(0x005500)
-          local tc = chars:sub(math.random(1, #chars), math.random(1, #chars))
-          if #tc == 0 then tc = "." end
-          gpu.set(x, trailY, tc:sub(1, 1))
+          local ci = math.random(1, #chars)
+          gpu.set(x, trailY, chars:sub(ci, ci))
         end
 
         -- Fade further back

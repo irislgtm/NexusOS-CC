@@ -124,7 +124,7 @@ function Modal:draw(screen)
   local textColor   = T.get("text_primary")
 
   screen.fillRect(ax, ay, w, h, bgColor)
-  screen.drawBorder(ax, ay, w, h, "single", borderColor, bgColor)
+  screen.drawBorder(ax, ay, w, h, borderColor, bgColor, "single")
 
   -- Title bar
   screen.drawHLine(ax + 1, ay, w - 2, " ", titleColor, T.get("accent"))

@@ -26,12 +26,20 @@ function Workspace:redraw()
   local T = require("theme")
   Screen.activateBuffer()
   Screen.clear(T.get("desktop_bg"))
+  if self.drawBackground then
+    self.drawBackground(self, Screen)
+  end
   self:draw(Screen)
   if self.onDraw then
     self.onDraw(self, Screen)
   end
   Screen.flush()
   self.needsRedraw = false
+end
+
+--- Override invalidate for root workspace
+function Workspace:invalidate()
+  self.needsRedraw = true
 end
 
 --- Request a redraw on next tick

@@ -205,16 +205,25 @@ local function kernelShell()
       elseif c == "shutdown" then
         computer.shutdown(false)
       elseif c == "desktop" then
-        -- Try to launch the desktop
         local ok, err = pcall(function()
           local desktop = require("desktop")
           desktop.start()
         end)
+        -- Reset GPU state after desktop exits or crashes
+        pcall(gpu.setActiveBuffer, 0)
+        gpu.setBackground(0x000000)
+        gpu.setForeground(0x00FF41)
+        gpu.fill(1, 1, hw.W, hw.H, " ")
+        gpu.set(1, 1, "NEXUS-OS v1.0 \xe2\x80\x94 Kernel Shell")
         if not ok then
           gpu.setForeground(0xFFAA00)
-          gpu.set(1, row, "Desktop not available yet: " .. tostring(err))
-          row = row + 1
+          gpu.set(1, 2, "Desktop error: " .. tostring(err))
+        else
+          gpu.set(1, 2, "Desktop exited.")
         end
+        gpu.setForeground(0x007744)
+        gpu.set(1, 3, string.rep("\xe2\x94\x80", hw.W))
+        row = 4
       else
         gpu.setForeground(0xFF8800)
         gpu.set(1, row, "Unknown command: " .. c)

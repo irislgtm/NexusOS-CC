@@ -19,6 +19,40 @@ WM.taskbar   = nil  -- reference to taskbar (set by desktop)
 local Window = setmetatable({}, {__index = Container})
 Window.__index = Window
 
+--- 90s-style expanding border animation for window open
+local function animateWindowOpen(fx, fy, fw, fh)
+  local gpu = _G.hw and _G.hw.gpu
+  if not gpu then return end
+  local cx = fx + math.floor(fw / 2)
+  local cy = fy + math.floor(fh / 2)
+  local borderColor = T.get("window_border")
+  local bgColor = T.get("desktop_bg")
+  pcall(gpu.setActiveBuffer, 0)
+  for s = 1, 4 do
+    local t = s / 4
+    local aw = math.max(4, math.floor(fw * t))
+    local ah = math.max(3, math.floor(fh * t))
+    local ax = math.max(1, cx - math.floor(aw / 2))
+    local ay = math.max(1, cy - math.floor(ah / 2))
+    gpu.setForeground(borderColor)
+    gpu.setBackground(bgColor)
+    local hBar = string.rep("\xe2\x94\x80", math.max(0, aw - 2))
+    gpu.set(ax, ay, "\xe2\x94\x8c" .. hBar .. "\xe2\x94\x90")
+    if ah > 2 then
+      gpu.set(ax, ay + ah - 1, "\xe2\x94\x94" .. hBar .. "\xe2\x94\x98")
+      for r = ay + 1, ay + ah - 2 do
+        gpu.set(ax, r, "\xe2\x94\x82")
+        gpu.set(ax + aw - 1, r, "\xe2\x94\x82")
+      end
+    end
+    computer.pullSignal(0.04)
+    if s < 4 then
+      gpu.setBackground(bgColor)
+      gpu.fill(ax, ay, aw, ah, " ")
+    end
+  end
+end
+
 --- Open a new window.
 -- @param opts  Table: { title, x, y, w, h, app, closable, resizable, minimizable }
 -- @return window container
@@ -28,6 +62,8 @@ function WM.open(opts)
   local h = opts.h or 20
   local x = opts.x or math.floor((160 - w) / 2) + 1
   local y = opts.y or math.floor((50 - h) / 2) + 1
+
+  animateWindowOpen(x, y, w, h)
 
   local win = Container.new(x, y, w, h)
   setmetatable(win, Window)

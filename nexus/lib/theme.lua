@@ -56,9 +56,9 @@ M.schemes = {
     button_disabled_fg = 0x333333,
 
     -- Status bar / taskbar
-    taskbar_bg         = 0x001100,
-    taskbar_fg         = 0x00CC33,
-    taskbar_active_bg  = 0x003300,
+    taskbar_bg         = 0x0A1A0A,
+    taskbar_fg         = 0x00FF41,
+    taskbar_active_bg  = 0x004400,
 
     -- Scrollbar
     scrollbar_bg       = 0x111111,
