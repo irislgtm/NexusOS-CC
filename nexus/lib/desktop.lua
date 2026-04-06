@@ -5,12 +5,13 @@
 
 local Screen    = require("gui.screen")
 local Workspace = require("gui.workspace")
-local WM        = require("gui.window")
 local Taskbar   = require("gui.taskbar")
-local Button    = require("gui.button")
-local Container = require("gui.container")
 local T         = require("theme")
-local Modal     = require("gui.modal")
+
+-- Lazy-loaded modules (deferred to reduce peak memory at startup)
+local WM       -- gui.window   – loaded on first app launch
+local Button   -- gui.button   – loaded when launcher opens
+local Modal    -- gui.modal    – loaded when a dialog is needed
 
 local M = {}
 
@@ -19,46 +20,58 @@ local taskbar
 local launcher
 local launcherOpen = false
 
--- ── Matrix Rain Background ──────────────────────────────────────────
+local function ensureWM()
+  if not WM then
+    WM = require("gui.window")
+    WM.workspace = workspace
+    WM.taskbar   = taskbar
+  end
+end
 
-local rainCols = {}
+-- ── Matrix Rain Background ──────────────────────────────────────────
+-- Flat arrays instead of table-per-column (saves ~44 KB Lua heap)
+
 local RAIN_CHARS = "012345789ABCDEFabcdef@#$&*.:=<>{}|/"
 local rainReady = false
+local rainY   -- [x] = y position
+local rainSpd -- [x] = speed (1 or 2)
+local rainLen -- [x] = trail length
+local rainCd  -- [x] = cooldown; <=0 means active, >0 means idle
 
 local function initRain()
   local sw, sh = Screen.getSize()
   sh = sh - 1
+  rainY   = {}
+  rainSpd = {}
+  rainLen = {}
+  rainCd  = {}
   for x = 1, sw do
-    rainCols[x] = {
-      y    = math.random(-10, sh),
-      spd  = math.random(1, 2),
-      len  = math.random(4, 14),
-      on   = math.random() > 0.65,
-      cd   = math.random(5, 50),
-    }
+    rainY[x]   = math.random(-10, sh)
+    rainSpd[x] = math.random(1, 2)
+    rainLen[x] = math.random(4, 14)
+    rainCd[x]  = -math.random(0, 40) -- negative = active, magnitude = head start
   end
   rainReady = true
 end
 
 local function tickRain()
-  if not rainReady then return end
+  if not rainReady then initRain(); return end
   local sw, sh = Screen.getSize()
   sh = sh - 1
   for x = 1, sw do
-    local c = rainCols[x]
-    if c.on then
-      c.y = c.y + c.spd
-      if c.y - c.len > sh then
-        c.on = false
-        c.cd = math.random(8, 50)
+    if rainCd[x] <= 0 then
+      -- active column – advance
+      rainY[x] = rainY[x] + rainSpd[x]
+      if rainY[x] - rainLen[x] > sh then
+        rainCd[x] = math.random(8, 50)
       end
     else
-      c.cd = c.cd - 1
-      if c.cd <= 0 then
-        c.on = true
-        c.y = math.random(-8, 0)
-        c.len = math.random(4, 14)
-        c.spd = math.random(1, 2)
+      -- idle – count down
+      rainCd[x] = rainCd[x] - 1
+      if rainCd[x] <= 0 then
+        rainY[x]   = math.random(-8, 0)
+        rainLen[x] = math.random(4, 14)
+        rainSpd[x] = math.random(1, 2)
       end
     end
   end
@@ -69,26 +82,27 @@ local function drawRain(wk, screen)
   local sw, sh = screen.getSize()
   sh = sh - 1
   local bg = T.get("desktop_bg")
+  local nChars = #RAIN_CHARS
 
   for x = 1, sw do
-    local c = rainCols[x]
-    if c.on then
-      local hy = c.y
+    if rainCd[x] <= 0 then
+      local hy = rainY[x]
       -- Head (brightest)
       if hy >= 1 and hy <= sh then
-        local ci = math.random(1, #RAIN_CHARS)
+        local ci = math.random(1, nChars)
         screen.drawChar(x, hy, RAIN_CHARS:sub(ci, ci), 0x00FF41, bg)
       end
-      -- Trail with fading brightness
-      for t = 1, math.min(c.len, 10) do
+      -- Fading trail
+      local len = rainLen[x]
+      for t = 1, math.min(len, 8) do
         local ty = hy - t
         if ty >= 1 and ty <= sh then
-          local ci = math.random(1, #RAIN_CHARS)
+          local ci = math.random(1, nChars)
           local shade
-          if t <= 2 then shade = 0x00AA33
+          if     t <= 2 then shade = 0x00AA33
           elseif t <= 4 then shade = 0x006622
-          elseif t <= 7 then shade = 0x003311
-          else shade = 0x001A08 end
+          elseif t <= 6 then shade = 0x003311
+          else                shade = 0x001A08 end
           screen.drawChar(x, ty, RAIN_CHARS:sub(ci, ci), shade, bg)
         end
       end
@@ -116,11 +130,13 @@ function M.launchApp(id)
       if _G._fs and _G._fs.exists(mainPath) then
         local source = _G._fs.read(mainPath)
         if not source then
+          Modal = Modal or require("gui.modal")
           workspace:addChild(Modal.alert("Error", "Failed to read " .. app.name))
           return
         end
         local fn, err = load(source, "=" .. mainPath)
         if fn then
+          ensureWM()
           local win = WM.open({
             title = app.name,
             x = 4 + math.random(0, 20),
@@ -131,15 +147,18 @@ function M.launchApp(id)
           if win then
             local ok, appErr = xpcall(fn, tostring, win, win.body, workspace)
             if not ok then
+              Modal = Modal or require("gui.modal")
               workspace:addChild(Modal.alert("Error",
                 app.name .. ": " .. tostring(appErr)))
             end
           end
         else
+          Modal = Modal or require("gui.modal")
           workspace:addChild(Modal.alert("Error",
             "Load " .. app.name .. ": " .. tostring(err)))
         end
       else
+        Modal = Modal or require("gui.modal")
         workspace:addChild(Modal.alert("Not Found", mainPath))
       end
       return
@@ -157,6 +176,9 @@ local function toggleLauncher()
     workspace:requestRedraw()
     return
   end
+
+  local Container = require("gui.container")
+  Button = Button or require("gui.button")
 
   local sw, sh = Screen.getSize()
   local panelW = 30
@@ -224,18 +246,13 @@ function M.start()
   -- Create workspace
   workspace = Workspace.new()
 
-  -- Matrix rain background
-  initRain()
+  -- Matrix rain background (initialized lazily on first tick)
   workspace.drawBackground = drawRain
 
   -- Taskbar at bottom
   taskbar = Taskbar.new()
   taskbar.onLogoClick = toggleLauncher
   workspace:addChild(taskbar)
-
-  -- Wire up Window Manager
-  WM.workspace = workspace
-  WM.taskbar   = taskbar
 
   -- Scan and register apps
   scanApps()
