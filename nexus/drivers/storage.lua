@@ -5,7 +5,7 @@
 -- and supports search, transfer, and real-time refresh.
 -- ============================================================================
 
-local component = component or require("computer") and component
+local component = component
 local computer  = computer
 
 local M = {}

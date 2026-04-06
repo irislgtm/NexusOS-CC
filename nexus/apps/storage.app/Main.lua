@@ -125,6 +125,11 @@ return function(window, body, workspace)
   -- TAB 3: Transfer (move items between containers)
   -- ════════════════════════════════════════════════════════════════════
 
+  -- Transfer state (declared before closures that capture these as upvalues)
+  local xferFromIdx, xferToIdx, xferItemLabel
+  local xferFromName, xferToName, xferStatus
+  local selectedInvIdx
+
   local xferPanel = Widget.new(0, 2, bw, bh - 3)
   xferPanel.visible = false
 
@@ -160,10 +165,6 @@ return function(window, body, workspace)
   end
   body:addChild(xferPanel)
 
-  -- Transfer state
-  local xferFromIdx, xferToIdx, xferItemLabel
-  local xferFromName, xferToName, xferStatus
-
   -- Source/Dest selectors (buttons)
   local setFromBtn = Button.new(2, 4, 18, 1, "Set Source [F]", function()
     if not storage then return end
@@ -179,12 +180,6 @@ return function(window, body, workspace)
     end
   end)
   setFromBtn.visible = false
-  xferPanel.draw = (function(origDraw)
-    return function(self, screen)
-      origDraw(self, screen)
-      -- Draw buttons via children approach
-    end
-  end)(xferPanel.draw)
   body:addChild(setFromBtn)
 
   local setToBtn = Button.new(2, 6, 18, 1, "Set Dest [T]", function()
@@ -227,8 +222,6 @@ return function(window, body, workspace)
   -- ════════════════════════════════════════════════════════════════════
   -- Data Functions
   -- ════════════════════════════════════════════════════════════════════
-
-  local selectedInvIdx = nil
 
   function refreshItemList()
     if not storage or not storage.isAvailable() then

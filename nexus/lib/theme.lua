@@ -91,6 +91,7 @@ M.schemes = {
     modal_overlay      = 0x000000,
     modal_bg           = 0x111111,
     modal_border       = 0x00FF41,
+    modal_title        = 0x00FF88,
   },
 
   phantom = {
@@ -160,6 +161,7 @@ M.schemes = {
     modal_overlay      = 0x000000,
     modal_bg           = 0x151528,
     modal_border       = 0x8866FF,
+    modal_title        = 0xCCAAFF,
   },
 
   ember = {
@@ -229,6 +231,7 @@ M.schemes = {
     modal_overlay      = 0x000000,
     modal_bg           = 0x151010,
     modal_border       = 0xFF4411,
+    modal_title        = 0xFF8844,
   },
 }
 

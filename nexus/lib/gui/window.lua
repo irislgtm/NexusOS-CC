@@ -51,6 +51,8 @@ local function animateWindowOpen(fx, fy, fw, fh)
       gpu.fill(ax, ay, aw, ah, " ")
     end
   end
+  -- Restore VRAM double-buffer after animating directly to screen buffer
+  pcall(Screen.activateBuffer)
 end
 
 --- Open a new window.
