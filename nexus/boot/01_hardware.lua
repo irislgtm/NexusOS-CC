@@ -61,24 +61,33 @@ hw.gpu.setForeground(0x00FF41)
 hw.gpu.fill(1, 1, hw.W, hw.H, " ")
 
 ----------------------------------------------------------------------------
--- Scan and cache all component proxies by type
+-- Scan component addresses by type (proxies created lazily on demand)
 ----------------------------------------------------------------------------
 hw.components = {}  -- type → {addr1, addr2, ...}
-hw.proxies    = {}  -- addr → proxy
+hw.proxies    = {}  -- addr → proxy (populated lazily)
 
 for addr, ctype in component.list() do
   if not hw.components[ctype] then
     hw.components[ctype] = {}
   end
-  table.insert(hw.components[ctype], addr)
-  hw.proxies[addr] = component.proxy(addr)
+  hw.components[ctype][#hw.components[ctype] + 1] = addr
+end
+
+-- Lazy proxy getter — only creates proxy when first accessed
+local function getProxy(addr)
+  local p = hw.proxies[addr]
+  if not p then
+    p = component.proxy(addr)
+    hw.proxies[addr] = p
+  end
+  return p
 end
 
 --- Get first component proxy of a given type, or nil
 function hw.find(ctype)
   local addrs = hw.components[ctype]
   if addrs and addrs[1] then
-    return hw.proxies[addrs[1]], addrs[1]
+    return getProxy(addrs[1]), addrs[1]
   end
   return nil, nil
 end
@@ -88,7 +97,7 @@ function hw.findAll(ctype)
   local result = {}
   local addrs = hw.components[ctype] or {}
   for _, addr in ipairs(addrs) do
-    result[#result + 1] = hw.proxies[addr]
+    result[#result + 1] = getProxy(addr)
   end
   return result
 end
@@ -101,14 +110,11 @@ function hw.rescan()
     if not hw.components[ctype] then
       hw.components[ctype] = {}
     end
-    table.insert(hw.components[ctype], addr)
-    hw.proxies[addr] = component.proxy(addr)
+    hw.components[ctype][#hw.components[ctype] + 1] = addr
   end
 end
 
 -- Boot message
-local compCount = 0
-for _ in component.list() do compCount = compCount + 1 end
-hw.gpu.set(1, 1, "[BOOT] Hardware: " .. compCount .. " components | GPU T3 | " .. hw.W .. "x" .. hw.H)
+hw.gpu.set(1, 1, "[BOOT] Hardware: GPU T3 | " .. hw.W .. "x" .. hw.H)
 
 return true

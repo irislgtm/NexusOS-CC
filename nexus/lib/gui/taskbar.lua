@@ -66,17 +66,15 @@ function Taskbar:draw(screen)
   local s = math.floor(uptime % 60)
   local clock = string.format("%02d:%02d:%02d", h, m, s)
 
-  -- Threat indicator
+  -- Threat indicator (only if motion driver is loaded)
   local threat = ""
-  pcall(function()
-    local motion = require("motion")
-    if motion.isAvailable and motion.isAvailable() then
-      local contacts = motion.getContacts and motion.getContacts() or {}
-      if #contacts > 0 then
-        threat = " ⚠" .. #contacts .. " "
-      end
+  local motion = package.loaded and package.loaded["motion"]
+  if motion and motion.isAvailable and motion.isAvailable() then
+    local ok, contacts = pcall(motion.getContacts)
+    if ok and contacts and #contacts > 0 then
+      threat = " ⚠" .. #contacts .. " "
     end
-  end)
+  end
 
   local rightText = threat .. " " .. clock .. " "
   screen.drawText(w - #rightText + 1, ay, rightText, T.get("taskbar_fg"), T.get("taskbar_bg"))

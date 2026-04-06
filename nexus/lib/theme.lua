@@ -249,10 +249,6 @@ function M.get(key)
   if M.active and M.active[key] then
     return M.active[key]
   end
-  -- Fallback to matrix if key missing
-  if M.schemes.matrix[key] then
-    return M.schemes.matrix[key]
-  end
   return 0xFFFFFF  -- ultimate fallback: white
 end
 
@@ -307,12 +303,7 @@ end
 
 --- List available scheme names.
 function M.list()
-  local names = {}
-  for name in pairs(M.schemes) do
-    names[#names + 1] = name
-  end
-  table.sort(names)
-  return names
+  return { "matrix", "phantom", "ember" }
 end
 
 return M

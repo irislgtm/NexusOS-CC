@@ -70,7 +70,7 @@ end
 --- Spawn and forget — runs function, auto-cleans.
 function M.exec(fn, name)
   return M.spawn(function()
-    local ok, err = xpcall(fn, debug.traceback)
+    local ok, err = xpcall(fn, function(e) return tostring(e) end)
     if not ok then
       if _G.event then
         _G.event.push("process_error", name, err)

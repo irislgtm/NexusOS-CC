@@ -15,6 +15,7 @@ local onceQueue = {}      -- name → { handler1, handler2, ... }
 local timers    = {}      -- id → { interval, callback, remaining, lastFire }
 local nextTimer = 1
 local pushed    = {}      -- queue of synthetic signals
+local pushedHead = 1       -- index of next signal to pop
 
 ----------------------------------------------------------------------------
 -- Listener management
@@ -60,7 +61,7 @@ end
 
 --- Inject a synthetic signal into the queue.
 function M.push(name, ...)
-  table.insert(pushed, table.pack(name, ...))
+  pushed[#pushed + 1] = table.pack(name, ...)
 end
 
 --- Coroutine-friendly blocking wait for a signal.
@@ -163,8 +164,16 @@ end
 
 --- Pop a synthetic signal if any exist.
 function M.popPushed()
-  if #pushed > 0 then
-    return table.remove(pushed, 1)
+  if pushedHead <= #pushed then
+    local sig = pushed[pushedHead]
+    pushed[pushedHead] = nil  -- allow GC
+    pushedHead = pushedHead + 1
+    -- Reset when queue is drained to prevent unbounded index growth
+    if pushedHead > #pushed then
+      pushed = {}
+      pushedHead = 1
+    end
+    return sig
   end
   return nil
 end

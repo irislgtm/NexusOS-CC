@@ -10,8 +10,6 @@ return function(window, body, workspace)
   local Button    = require("gui.button")
   local TextField = require("gui.textfield")
   local Widget    = require("gui.widget")
-  local Progress  = require("gui.progress")
-  local Chart     = require("gui.chart")
   local T         = require("theme")
   local Modal     = require("gui.modal")
 
@@ -223,7 +221,7 @@ return function(window, body, workspace)
   -- Data Functions
   -- ════════════════════════════════════════════════════════════════════
 
-  function refreshItemList()
+  local function refreshItemList()
     if not storage or not storage.isAvailable() then
       itemList:setData({})
       return
@@ -251,7 +249,7 @@ return function(window, body, workspace)
     body:invalidate()
   end
 
-  function refreshInvList()
+  local function refreshInvList()
     if not storage or not storage.isAvailable() then
       invList:setData({})
       return
@@ -334,13 +332,24 @@ return function(window, body, workspace)
     refreshInvList()
   end
 
-  -- Auto-refresh timer (every 5 seconds)
-  if _G.event then
-    _G.event.timer(5, function()
+  -- Auto-refresh timer (every 5 seconds) — cancelled on window close
+  local refreshTimerId
+  if _G.event and storage then
+    refreshTimerId = _G.event.timer(5, function()
       if not storage then return end
       storage.refresh()
       refreshItemList()
       refreshInvList()
     end, math.huge)
+  end
+
+  -- Cancel timer when window is closed to prevent ghost refreshes
+  if window and window.meta then
+    window.meta.app = window.meta.app or {}
+    window.meta.app.close = function()
+      if refreshTimerId and _G.event then
+        _G.event.cancelTimer(refreshTimerId)
+      end
+    end
   end
 end

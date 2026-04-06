@@ -92,12 +92,39 @@ function _G.require(name)
   return package.loaded[name]
 end
 
+local function fsWrite(path, data)
+  local handle = filesystem.open(path, "w")
+  if not handle then return false end
+  filesystem.write(handle, data)
+  filesystem.close(handle)
+  return true
+end
+
+local function fsList(path)
+  local result = {}
+  if not filesystem.isDirectory(path) then return result end
+  local iter = filesystem.list(path)
+  if iter then
+    for entry in iter do
+      result[#result + 1] = entry
+    end
+  end
+  return result
+end
+
+local function fsMkdir(path)
+  return filesystem.makeDirectory(path)
+end
+
 ----------------------------------------------------------------------------
 -- Export filesystem helpers for later boot scripts
 ----------------------------------------------------------------------------
 _G._fs = {
   read    = fsRead,
+  write   = fsWrite,
   exists  = fsExists,
+  list    = fsList,
+  mkdir   = fsMkdir,
   proxy   = filesystem,
 }
 

@@ -115,18 +115,12 @@ function M.tick(signal)
       if not ok then
         p.status = "dead"
         p.error  = tostring(err)
+        processes[pid] = nil
       elseif coroutine.status(p.co) == "dead" then
         p.status = "dead"
+        processes[pid] = nil
       end
     else
-      p.status = "dead"
-      processes[pid] = nil
-    end
-  end
-
-  -- Reap dead
-  for pid, p in pairs(processes) do
-    if p.status == "dead" then
       processes[pid] = nil
     end
   end

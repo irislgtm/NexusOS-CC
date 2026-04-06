@@ -256,6 +256,9 @@ function M.start()
 
   -- Start workspace event loop (blocking)
   workspace:start()
+
+  -- Cleanup: free VRAM buffer when desktop exits
+  Screen.destroy()
 end
 
 function M.getWorkspace() return workspace end

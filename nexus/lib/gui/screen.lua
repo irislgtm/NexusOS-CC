@@ -179,8 +179,14 @@ function M.drawVLine(x, y, length, char, fg, bg)
   if bg then M.setBg(bg) end
   M.setFg(fg)
   char = char or "│"
-  for row = y, math.min(y + length - 1, H) do
-    if row >= 1 then
+  local endY = math.min(y + length - 1, H)
+  local startY = math.max(y, 1)
+  if startY > endY then return end
+  -- Use fill for single-char vertical lines (1 GPU call vs N)
+  if #char == 1 or char == "│" or char == "║" then
+    gpu.fill(x, startY, 1, endY - startY + 1, char)
+  else
+    for row = startY, endY do
       gpu.set(x, row, char)
     end
   end

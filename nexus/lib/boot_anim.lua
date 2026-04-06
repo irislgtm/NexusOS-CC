@@ -16,54 +16,68 @@ function M.matrixRain(gpu, duration)
   -- Column state: y position per column
   local cols = {}
   for x = 1, w do
-    cols[x] = math.random(1, h)
+    cols[x] = { y = math.random(1, h), on = math.random() > 0.4 }
   end
 
   local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*<>{}[]|/"
+  local cLen = #chars
 
   gpu.setBackground(0x000000)
   gpu.fill(1, 1, w, h, " ")
 
-  while (computer.uptime() - startTime) < duration do
-    for x = 1, w do
-      if math.random() > 0.4 then
-        -- Draw falling char (bright head)
-        local y = cols[x]
-        local ci = math.random(1, #chars)
-        local ch = chars:sub(ci, ci)
+  -- Process a subset of columns each frame to stay within GPU call budget
+  local batchStart = 1
+  local BATCH = 40  -- columns per frame (~120 gpu calls max)
 
-        gpu.setForeground(0x00FF00)
-        gpu.set(x, y, ch)
+  while (computer.uptime() - startTime) < duration do
+    local batchEnd = math.min(batchStart + BATCH - 1, w)
+
+    for x = batchStart, batchEnd do
+      local c = cols[x]
+      if c.on then
+        local y = c.y
+
+        -- Draw falling char (bright head)
+        if y >= 1 and y <= h then
+          gpu.setForeground(0x00FF00)
+          gpu.set(x, y, chars:sub(math.random(1, cLen), math.random(1, cLen)))
+        end
 
         -- Dim the trail
         local trailY = y - 1
-        if trailY >= 1 then
+        if trailY >= 1 and trailY <= h then
           gpu.setForeground(0x005500)
-          local ci = math.random(1, #chars)
-          gpu.set(x, trailY, chars:sub(ci, ci))
+          gpu.set(x, trailY, chars:sub(math.random(1, cLen), math.random(1, cLen)))
         end
 
-        -- Fade further back
+        -- Fade further back (erase with bg)
         local fadeY = y - math.random(4, 12)
-        if fadeY >= 1 then
-          gpu.setForeground(0x002200)
+        if fadeY >= 1 and fadeY <= h then
+          gpu.setBackground(0x000000)
           gpu.set(x, fadeY, " ")
         end
 
         -- Advance column
-        cols[x] = y + 1
-        if cols[x] > h then
-          cols[x] = 1
-          -- Clear column occasionally
-          if math.random() > 0.7 then
-            gpu.setForeground(0x000000)
-            for cy = 1, h do gpu.set(x, cy, " ") end
-          end
+        c.y = y + 1
+        if c.y > h then
+          c.y = 1
+          c.on = math.random() > 0.3
+        end
+      else
+        -- Randomly restart idle columns
+        if math.random() > 0.92 then
+          c.on = true
+          c.y = 1
         end
       end
     end
-    -- Yield to prevent timeout
-    computer.pullSignal(0.02)
+
+    -- Advance batch window (round-robin across all columns)
+    batchStart = batchEnd + 1
+    if batchStart > w then batchStart = 1 end
+
+    -- Yield to prevent timeout — ~20 FPS visual
+    computer.pullSignal(0.05)
   end
 end
 
@@ -129,9 +143,11 @@ function M.post(gpu)
   postOK("  RAM", math.floor(totalMem / 1024) .. "KB total, " ..
     math.floor(freeMem / 1024) .. "KB free")
 
-  -- VRAM
-  local vram = gpu.totalMemory and gpu.totalMemory() or 0
-  if vram > 0 then
+  -- VRAM (not all GPUs expose totalMemory)
+  local vramOk, vram = pcall(function()
+    return gpu.totalMemory and gpu.totalMemory() or 0
+  end)
+  if vramOk and vram and vram > 0 then
     postOK("  VRAM", math.floor(vram / 1024) .. "KB")
   end
 
