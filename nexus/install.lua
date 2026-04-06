@@ -8,11 +8,11 @@ local component = require("component")
 local computer = require("computer")
 local fs = require("filesystem")
 local shell = require("shell")
-local term = require("term")
+local event = require("event")
 local internet = component.internet
 
 -- Config
-local REPO_BASE = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main/nexus/"
+local REPO_BASE = "https://raw.githubusercontent.com/irislgtm/NexusOS-CC/main/nexus/"
 local INSTALL_ROOT = "/"
 local VERSION = "1.0.0"
 
