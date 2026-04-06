@@ -39,7 +39,7 @@ function WM.open(opts)
     resizable   = opts.resizable ~= false,
     minimizable = opts.minimizable ~= false,
     minimized   = false,
-    id          = tostring(#WM.windows + 1) .. "-" .. tostring(os and os.clock and os.clock() or 0),
+    id          = tostring(#WM.windows + 1) .. "-" .. tostring(math.floor((computer and computer.uptime() or 0) * 1000)),
     icon        = opts.icon or nil,
   }
 

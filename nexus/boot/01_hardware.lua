@@ -107,15 +107,8 @@ function hw.rescan()
 end
 
 -- Boot message
-hw.gpu.set(1, 1, "[BOOT] Hardware scan complete: " ..
-  #(function() local n=0; for _ in component.list() do n=n+1 end; return tostring(n) end)() ..
-  " ... nah")
-
--- Count components properly
 local compCount = 0
 for _ in component.list() do compCount = compCount + 1 end
-
-hw.gpu.fill(1, 1, hw.W, 1, " ")
 hw.gpu.set(1, 1, "[BOOT] Hardware: " .. compCount .. " components | GPU T3 | " .. hw.W .. "x" .. hw.H)
 
 return true

@@ -44,7 +44,13 @@ function M.launchApp(id)
     if app.id == id then
       local mainPath = app.path .. "/Main.lua"
       if _G._fs and _G._fs.exists(mainPath) then
-        local fn, err = loadfile(mainPath)
+        local source = _G._fs.read(mainPath)
+        if not source then
+          local errDlg = Modal.alert("Error", "Failed to read " .. app.name)
+          workspace:addChild(errDlg)
+          return
+        end
+        local fn, err = load(source, "=" .. mainPath)
         if fn then
           local win = Window.WM.open({
             title  = app.name,
@@ -57,7 +63,7 @@ function M.launchApp(id)
           })
           if win then
             -- Run app in its window body container
-            local ok, appErr = xpcall(fn, debug.traceback, win, win.body, workspace)
+            local ok, appErr = xpcall(fn, tostring, win, win.body, workspace)
             if not ok then
               local errWin = Modal.alert("Error", app.name .. ": " .. tostring(appErr))
               workspace:addChild(errWin)

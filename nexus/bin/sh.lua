@@ -183,13 +183,18 @@ function M.execute(line)
   end
 
   -- Load and execute
-  local fn, err = loadfile(path)
+  local source = _G._fs and _G._fs.read(path)
+  if not source then
+    print("sh: cannot read " .. path)
+    return
+  end
+  local fn, err = load(source, "=" .. path)
   if not fn then
     print("sh: error loading " .. cmd .. ": " .. tostring(err))
     return
   end
 
-  local ok, result = xpcall(fn, debug.traceback, table.unpack(args))
+  local ok, result = xpcall(fn, tostring, table.unpack(args))
   if not ok then
     print("sh: " .. cmd .. ": " .. tostring(result))
   end

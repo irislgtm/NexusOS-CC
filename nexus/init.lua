@@ -33,29 +33,33 @@ local bootList = {
 for _, name in ipairs(bootList) do
   local path = bootDir .. name
   local handle = bootFS.open(path, "r")
-  if handle then
-    local chunks = {}
-    while true do
-      local data = bootFS.read(handle, 4096)
-      if not data then break end
-      chunks[#chunks + 1] = data
-    end
-    bootFS.close(handle)
+  if not handle then
+    _gpu.setForeground(0xFF0000)
+    _gpu.set(1, 6, "BOOT FATAL: Missing " .. path)
+    while true do computer.pullSignal(10) end
+  end
 
-    local source = table.concat(chunks)
-    local fn, err = load(source, "=" .. path)
-    if fn then
-      local ok, result = xpcall(fn, function(e) return tostring(e) end)
-      if not ok then
-        _gpu.setForeground(0xFF0000)
-        _gpu.set(1, 6, "BOOT FATAL: " .. path .. ": " .. tostring(result))
-        while true do computer.pullSignal(10) end
-      end
-    else
+  local chunks = {}
+  while true do
+    local data = bootFS.read(handle, 4096)
+    if not data then break end
+    chunks[#chunks + 1] = data
+  end
+  bootFS.close(handle)
+
+  local source = table.concat(chunks)
+  local fn, err = load(source, "=" .. path)
+  if fn then
+    local ok, result = xpcall(fn, function(e) return tostring(e) end)
+    if not ok then
       _gpu.setForeground(0xFF0000)
-      _gpu.set(1, 6, "BOOT SYNTAX: " .. path .. ": " .. tostring(err))
+      _gpu.set(1, 6, "BOOT FATAL: " .. path .. ": " .. tostring(result))
       while true do computer.pullSignal(10) end
     end
+  else
+    _gpu.setForeground(0xFF0000)
+    _gpu.set(1, 6, "BOOT SYNTAX: " .. path .. ": " .. tostring(err))
+    while true do computer.pullSignal(10) end
   end
 end
 
