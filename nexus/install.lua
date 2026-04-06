@@ -9,6 +9,7 @@ local computer = require("computer")
 local fs = require("filesystem")
 local shell = require("shell")
 local event = require("event")
+local unicode = require("unicode")
 local internet = component.internet
 
 -- Config
@@ -129,7 +130,8 @@ local function clearScreen()
 end
 
 local function centerText(y, text)
-  local x = math.floor((W - #text) / 2) + 1
+  local len = unicode.len(text)
+  local x = math.floor((W - len) / 2) + 1
   gpu.set(x, y, text)
 end
 
@@ -198,10 +200,10 @@ clearScreen()
 
 -- Banner
 setColor(0x00FF00, 0x000000)
-centerText(2,  "╔══════════════════════════════════════════╗")
-centerText(3,  "║          N E X U S - O S   v" .. VERSION .. "          ║")
-centerText(4,  "║     Surveillance Operating System        ║")
-centerText(5,  "╚══════════════════════════════════════════╝")
+centerText(2,  "╔════════════════════════════════════════════╗")
+centerText(3,  "║         N E X U S - O S   v" .. VERSION .. "          ║")
+centerText(4,  "║      Surveillance Operating System        ║")
+centerText(5,  "╚════════════════════════════════════════════╝")
 centerText(7,  "Autonomous Tracking · Mapping · Drone Control")
 
 setColor(0xAAAAAA)

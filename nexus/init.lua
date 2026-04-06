@@ -25,9 +25,9 @@ local bootFS   = component.proxy(computer.getBootAddress())
 local bootDir  = "/boot/"
 local bootList = {}
 
-local iter = bootFS.list(bootDir)
-if iter then
-  for name in iter do
+local entries = bootFS.list(bootDir)
+if entries then
+  for _, name in ipairs(entries) do
     if name:match("%.lua$") then
       bootList[#bootList + 1] = name
     end
