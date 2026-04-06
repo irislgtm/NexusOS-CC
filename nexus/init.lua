@@ -19,21 +19,16 @@ _gpu.fill(1, 1, 160, 50, " ")
 _gpu.set(1, 1, "NEXUS-OS v1.0 — Booting...")
 
 ----------------------------------------------------------------------------
--- Load boot scripts in alphabetical order
+-- Load boot scripts in explicit order (avoids picking up foreign OS files)
 ----------------------------------------------------------------------------
 local bootFS   = component.proxy(computer.getBootAddress())
 local bootDir  = "/boot/"
-local bootList = {}
-
-local entries = bootFS.list(bootDir)
-if entries then
-  for _, name in ipairs(entries) do
-    if name:match("%.lua$") then
-      bootList[#bootList + 1] = name
-    end
-  end
-end
-table.sort(bootList)
+local bootList = {
+  "01_hardware.lua",
+  "02_memory.lua",
+  "03_scheduler.lua",
+  "04_events.lua",
+}
 
 for _, name in ipairs(bootList) do
   local path = bootDir .. name
