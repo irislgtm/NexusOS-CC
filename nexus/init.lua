@@ -50,7 +50,7 @@ for _, name in ipairs(bootList) do
     local source = table.concat(chunks)
     local fn, err = load(source, "=" .. path)
     if fn then
-      local ok, result = xpcall(fn, debug.traceback)
+      local ok, result = xpcall(fn, function(e) return tostring(e) end)
       if not ok then
         _gpu.setForeground(0xFF0000)
         _gpu.set(1, 6, "BOOT FATAL: " .. path .. ": " .. tostring(result))
@@ -252,16 +252,9 @@ while true do
     if signal.n == 0 then signal = nil end
   end
 
-  -- Dispatch to registered handlers
-  if signal then
-    event.dispatch(signal)
-  end
+  -- Dispatch to registered handlers and fire timers
+  event.dispatch(signal)
 
   -- Resume all process coroutines
   scheduler.tick(signal)
-
-  -- Also fire timers even on empty signals
-  if not signal then
-    event.dispatch(nil)
-  end
 end
